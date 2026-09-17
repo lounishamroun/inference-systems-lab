@@ -1,11 +1,18 @@
 from fastapi import FastAPI
 from enum import Enum
 import src.inference_lab.model.tiny_gpt2 as tiny_gpt2 
-from pydantic import BaseModel
+from pydantic import BaseModel,ConfigDict
 import uvicorn
-from fastapi.testclient import TestClient
 
 app = FastAPI()
+
+class promptFormat(BaseModel):
+    model_config = ConfigDict(strict=True)
+    prompt:str 
+    
+    def __getitem__(self):
+        return self.prompt
+        
 
 class modelName(str,Enum):
     gpt2_tiny="gpt2_tiny"
@@ -27,10 +34,11 @@ Receive str prompt
 """
     
 @app.post("/generate")
-async def send_prompt(prompt):
-    print(f'promt is {prompt}')
-    formatted_prompt=prompt
-    model_output=tiny_gpt2.tinyGpt2().GenerateResult(prompt=formatted_prompt)
+async def send_prompt(
+    prompt:promptFormat
+    ):
+    body=prompt.prompt
+    model_output=tiny_gpt2.tinyGpt2().GenerateResult(prompt=body)
     return model_output
 
 if __name__ == "__main__":

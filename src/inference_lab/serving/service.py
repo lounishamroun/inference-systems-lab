@@ -4,6 +4,7 @@ import json
 
 payload={"prompt": "My favorite italian food is"}
 json_payload=json.dumps(payload)
+print(json_payload)
 x = requests.post('http://127.0.0.1:8000/generate',json=json_payload)
 
 
