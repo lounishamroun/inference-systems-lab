@@ -1,5 +1,10 @@
 ARTICLE_NOTES.md
 STICKY_NOTES.md
+SOURCES.md
+PROGRESS.md
 *cache*
 sandbox.py
 .venv
+.pytest_cache
+inference_systems_lab.egg-info
+features_progression.md
