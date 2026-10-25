@@ -1,18 +1,15 @@
 from fastapi import FastAPI
 from enum import Enum
-import src.inference_lab.model.tiny_gpt2 as tiny_gpt2 
+from inference_lab.model.tiny_gpt2 import tinyGpt2
 from pydantic import BaseModel,ConfigDict
 import uvicorn
+import time
+from fastapi.responses import StreamingResponse
+from schema import promptFormat
 
 app = FastAPI()
+model=tinyGpt2()
 
-class promptFormat(BaseModel):
-    model_config = ConfigDict(strict=True)
-    prompt:str 
-    
-    def __getitem__(self):
-        return self.prompt
-        
 
 class modelName(str,Enum):
     gpt2_tiny="gpt2_tiny"
@@ -20,7 +17,7 @@ class modelName(str,Enum):
 @app.get("/model_info/{model_name}")
 async def model_info(model_name):
     if model_name==modelName.gpt2_tiny:
-        conf_file=tiny_gpt2.tinyGpt2().config
+        conf_file=tinyGpt2().config
         return{           
             "model_dimension": conf_file.d_model,
             "num_heads": conf_file.n_heads,
@@ -37,8 +34,11 @@ Receive str prompt
 async def send_prompt(
     prompt:promptFormat
     ):
-    body=prompt.prompt
-    model_output=tiny_gpt2.tinyGpt2().GenerateResult(prompt=body)
+    body=prompt.prompt #type str
+
+    assert isinstance(body,str)
+    model=tinyGpt2()
+    model_output=model.GenerateResult(input_prompt=body)
     return model_output
 
 if __name__ == "__main__":
