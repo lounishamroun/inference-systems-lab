@@ -30,7 +30,8 @@ class tinyGpt2():
 
     def loadWeights(self):
         self.reference_model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
-        GPT2WeightLoader(reference_model=self.reference_model,custom_model=self.model,single_block=None)
+        GPT2WeightLoader(reference_model=self.reference_model,custom_model=self.model,single_block=None).transfer_all()
+        print('weights transferred')
     
     @torch.inference_mode()
     def GenerateResult(self,input_prompt,max_new_tokens=10):
@@ -38,30 +39,33 @@ class tinyGpt2():
         self.model.to(device=self.device)
         
         
-        generated_ids =  self.tokenize(input_prompt)
+        generated_ids=self.tokenize(input_prompt)
+        generated_ids=generated_ids.to(self.device)
+        
         for _ in range(max_new_tokens):
-
-            logits = self.model(generated_ids)
-            next_token_logits = logits[:, -1, :] #corresponding to the latest sequence position
             
-            highest_correlation_token = torch.argmax(
+            #model output 
+            # shape => [B,T,vocab_size]
+            logits = self.model(generated_ids) 
+            
+            #corresponding to the latest sequence position
+            # shape => [B,1,vocab_size]
+            next_token_logits = logits[:, -1, :] 
+            
+            
+            argmax_vocab_index = torch.argmax(
                 next_token_logits,
-                dim=1,
+                dim=-1,
                 keepdim=True,
             )
             
-            next_token_logits=next_token_logits[next_token_logits!=highest_correlation_token]
-            
-            next_token_id = torch.argmax(
-                            next_token_logits,
-                            dim=-1,
-                            keepdim=True,
-                        )
-            
+            next_token_id=argmax_vocab_index
+
+            #generated_ids.shape => [B=1, T] | next_token_id.shape => [B=1,1] 
             generated_ids = torch.cat(
                 [generated_ids, next_token_id],
-                dim=1,
+                dim=-1,
             )
             
-            yield self.TokenToWord(next_token_id)
+        return self.TokenToWord(generated_ids)
         
