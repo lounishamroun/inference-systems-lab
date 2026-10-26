@@ -1,0 +1,21 @@
+[project]
+name = "inference-systems-lab"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.141.1",
+    "httpx>=0.28.1",
+    "numpy>=2.5.3",
+    "requests>=2.34.2",
+    "torch>=2.14.0",
+    "triton>=3.8.0",
+    "uvicorn>=0.52.4",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.fastapi]
+entrypoint = "src.inference_lab.serving.api:app"
