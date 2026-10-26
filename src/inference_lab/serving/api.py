@@ -9,7 +9,8 @@ from schema import promptFormat
 
 app = FastAPI()
 model=tinyGpt2()
-
+model.loadWeights()
+model.model.eval()
 
 class modelName(str,Enum):
     gpt2_tiny="gpt2_tiny"
@@ -30,16 +31,16 @@ async def model_info(model_name):
 Receive str prompt  
 """
     
-@app.post("/generate")
+@app.post("/generate",response_class=StreamingResponse)
 async def send_prompt(
     prompt:promptFormat
     ):
     body=prompt.prompt #type str
-
     assert isinstance(body,str)
-    model=tinyGpt2()
     model_output=model.GenerateResult(input_prompt=body)
-    return model_output
+    for word in model_output:
+        yield(word)
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
