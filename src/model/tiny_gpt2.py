@@ -2,7 +2,7 @@ from tiny_transformer.block import TinyModel
 from tiny_transformer.transfer_model_param import GPT2WeightLoader
 from tiny_transformer.config import GPT2CustomConfig
 from tiny_transformer.generation import greedy_generate
-from transformers import AutoTokenizer,AutoModelForCausalLM
+from transformers import AutoModelForCausalLM
 import torch
 
 
@@ -12,21 +12,6 @@ class tinyGpt2():
         self.device="cuda:0" if torch.cuda.is_available() else "cpu"
         self.config=GPT2CustomConfig()
         self.model=TinyModel(config=self.config)
-        self.tokenizer = AutoTokenizer.from_pretrained(
-                    "openai-community/gpt2"
-                )
-        
-    def tokenize(self,text):
-        
-        ids = self.tokenizer(
-            text,
-            return_tensors="pt",
-        )["input_ids"]
-        return ids
-    
-    def TokenToWord(self,token_id):
-        word=self.tokenizer.decode(token_id)
-        return word
 
     def loadWeights(self):
         self.reference_model = AutoModelForCausalLM.from_pretrained("openai-community/gpt2")
@@ -34,23 +19,22 @@ class tinyGpt2():
         print('weights transferred')
     
     @torch.inference_mode()
-    def GenerateResult(self,input_prompt,max_new_tokens=10):
+    def GenerateResult(self,input_prompt,n_turns=10,debug_mode=False):
        
         self.model.to(device=self.device)
-        
-        
-        generated_ids=self.tokenize(input_prompt)
+    
+        generated_ids=input_prompt
         generated_ids=generated_ids.to(self.device)
         
-        for _ in range(max_new_tokens):
-            
-            #model output 
-            # shape => [B,T,vocab_size]
-            logits = self.model(generated_ids) 
+        #model output 
+        # shape => [B,T,vocab_size]
+        init_logits = self.model(generated_ids) 
+        
+        for _ in range(n_turns):
             
             #corresponding to the latest sequence position
             # shape => [B,1,vocab_size]
-            next_token_logits = logits[:, -1, :] 
+            next_token_logits = init_logits[:, -1, :] 
             
             
             argmax_vocab_index = torch.argmax(
@@ -67,5 +51,9 @@ class tinyGpt2():
                 dim=-1,
             )
             
-        return self.TokenToWord(generated_ids)
+            init_logits=self.model(generated_ids) 
         
+        if debug_mode==True:
+            return init_logits
+            
+        return generated_ids

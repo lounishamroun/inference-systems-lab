@@ -1,16 +1,20 @@
 from fastapi import FastAPI
 from enum import Enum
-from inference_lab.model.tiny_gpt2 import tinyGpt2
+from model.tiny_gpt2 import tinyGpt2
 from pydantic import BaseModel,ConfigDict
 import uvicorn
 import time
 from fastapi.responses import StreamingResponse
 from schema import promptFormat
+from src.engine.tokenizer import tokenizer
+import torch 
+
 
 app = FastAPI()
 model=tinyGpt2()
 model.loadWeights()
 model.model.eval()
+        
 
 class modelName(str,Enum):
     gpt2_tiny="gpt2_tiny"
@@ -36,11 +40,14 @@ async def send_prompt(
     prompt:promptFormat
     ):
     body=prompt.prompt #type str
-    assert isinstance(body,str)
-    model_output=model.GenerateResult(input_prompt=body)
-    for word in model_output:
-        yield(word)
-
+    assert isinstance(body,str),f"Expected type `str`, got {type(body)}"
+    tokenized_body=tokenizer().tokenize(text=body)
+    assert isinstance(tokenized_body,torch.Tensor),f"Expected type `torch.Tensor`, got {type(tokenized_body)}"
+    model_output=model.GenerateResult(input_prompt=tokenized_body) #type torch.Tensor
+    response=tokenizer().TokenToWord(model_output)[0]
+    assert isinstance(response,str),f"Expected type `str`, got {type(response)}"
+    
+    return response
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
