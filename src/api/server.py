@@ -42,7 +42,8 @@ async def send_prompt(
     body=prompt.prompt #type str
     assert isinstance(body,str),f"Expected type `str`, got {type(body)}"
     if len(body.strip())==0 or len(body.strip())>200:
-        return Problem("Prompt shouldn't be empty or having a length > 200 characters",415)
+        response=Problem(error_message="Prompt shouldn't be empty or having a length > 200 characters",status_code=415)
+        return response.error_message,response.status_code
 
     tokenized_body=tokenizer().tokenize(text=body)
     assert isinstance(tokenized_body,torch.Tensor),f"Expected type `torch.Tensor`, got {type(tokenized_body)}"
