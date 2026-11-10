@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel,ConfigDict
+from pydantic import BaseModel,ConfigDict,Field
 
 
 class Problem(BaseModel):
@@ -10,6 +10,7 @@ class Problem(BaseModel):
 class promptFormat(BaseModel):
     model_config = ConfigDict(strict=True)
     prompt:str
+    model_name:str = Field(default="gpt2_tiny")
     
     def __getitem__(self):
         return self.prompt
