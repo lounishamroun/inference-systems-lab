@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from enum import Enum
 from model.tiny_gpt2 import tinyGpt2
 from pydantic import BaseModel,ConfigDict
+from src.engine.inference_engine import inferenceEngine
 import uvicorn
 import time
 from fastapi.responses import StreamingResponse
@@ -11,10 +12,7 @@ import torch
 
 
 app = FastAPI()
-model=tinyGpt2()
-model.loadWeights()
-model.model.eval()
-        
+
 
 class modelName(str,Enum):
     gpt2_tiny="gpt2_tiny"
@@ -40,15 +38,30 @@ async def send_prompt(
     prompt:promptFormat
     ):
     body=prompt.prompt #type str
+    model_name=prompt.model_name
     assert isinstance(body,str),f"Expected type `str`, got {type(body)}"
+    assert isinstance(model_name,str),f"Expected type `str`, got {type(body)}"
+    
     if len(body.strip())==0 or len(body.strip())>200:
         response=Problem(error_message="Prompt shouldn't be empty or having a length > 200 characters",status_code=415)
         return response.error_message,response.status_code
+    
+    if len(body.strip())==0 or len(body.strip())>50:
+        response=Problem(error_message="Model name shouldn't be empty or having a length > 50 characters",status_code=415)
+        return response.error_message,response.status_code
 
+    """TOKENIZATION"""
     tokenized_body=tokenizer().tokenize(text=body)
     assert isinstance(tokenized_body,torch.Tensor),f"Expected type `torch.Tensor`, got {type(tokenized_body)}"
-    model_output=model.GenerateResult(input_prompt=tokenized_body) #type torch.Tensor
+    """CALL TO MODEL"""
+    #TO DO await model call or enginecore call
+    inference_engine=inferenceEngine(tokenized_body=tokenized_body,model_name=model_name)
+    model_output=inference_engine.generate() #type torch.Tensor
+    
+    """DETOKENIZATION"""
+    
     response=tokenizer().TokenToWord(model_output)[0]
+    
     assert isinstance(response,str),f"Expected type `str`, got {type(response)}"
     
     return response
