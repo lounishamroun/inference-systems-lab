@@ -5,7 +5,7 @@ from pydantic import BaseModel,ConfigDict
 import uvicorn
 import time
 from fastapi.responses import StreamingResponse
-from schema import promptFormat
+from schema import promptFormat,Problem
 from src.engine.tokenizer import tokenizer
 import torch 
 
@@ -41,6 +41,9 @@ async def send_prompt(
     ):
     body=prompt.prompt #type str
     assert isinstance(body,str),f"Expected type `str`, got {type(body)}"
+    if len(body.strip())==0 or len(body.strip())>200:
+        return Problem("Prompt shouldn't be empty or having a length > 200 characters",415)
+
     tokenized_body=tokenizer().tokenize(text=body)
     assert isinstance(tokenized_body,torch.Tensor),f"Expected type `torch.Tensor`, got {type(tokenized_body)}"
     model_output=model.GenerateResult(input_prompt=tokenized_body) #type torch.Tensor
