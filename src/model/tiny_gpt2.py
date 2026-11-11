@@ -22,7 +22,7 @@ class tinyGpt2():
     def GenerateResult(self,input_prompt,n_turns=10,debug_mode=False):
        
         self.model.to(device=self.device)
-    
+        assert isinstance(input_prompt,torch.Tensor),f'Got type: {type(input_prompt)}, expected type: torch.Tensor'
         generated_ids=input_prompt
         generated_ids=generated_ids.to(self.device)
         

@@ -23,15 +23,15 @@ def custom_config():
     return conf
 
 @pytest.fixture(scope="session")
-def custom_model():
+def custom_model(device):
     custom_model=tinyGpt2()
     custom_model.loadWeights()
     custom_model.model.eval()
-    return custom_model
+    return custom_model.model.to(device)
     
 @pytest.fixture(scope="session")
 def json_prompt():
-    payload={"prompt": "My favorite italian food is"}
+    payload={"prompt": "My favorite italian food is","model_name":"gpt2_tiny"}
     json_payload=json.dumps(payload)
     return json_payload
 

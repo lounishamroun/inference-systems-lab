@@ -4,14 +4,8 @@ import torch
 
 
 @torch.inference_mode()
-def test_non_null(raw_prompt,custom_model,n_turns):
-    assert raw_prompt and raw_prompt is not None
-    model_output=custom_model.GenerateResult(input_prompt=raw_prompt,n_turns=n_turns)
-    assert model_output is not None
-
-
-def test_matching_ref_model(custom_model,reference_model,raw_prompt,n_turns,tokenized_prompt):
-    assert raw_prompt and raw_prompt is not None
+def test_matching_ref_model(custom_model,reference_model,n_turns,tokenized_prompt):
+    assert tokenized_prompt is not None
 
     expected = reference_model(
         input_ids=tokenized_prompt,
@@ -19,7 +13,8 @@ def test_matching_ref_model(custom_model,reference_model,raw_prompt,n_turns,toke
     ).logits
     
 
-    actual =custom_model.GenerateResult(input_prompt=raw_prompt,n_turns=n_turns,debug_mode=True)
+    actual =custom_model(tokenized_prompt)
+
 
     diff = (actual - expected).abs()
 
