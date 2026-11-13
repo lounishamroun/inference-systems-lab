@@ -18,4 +18,4 @@ dev = [
 ]
 
 [tool.fastapi]
-entrypoint = "src.inference_lab.serving.api:app"
+entrypoint = "src.api.server:app"
